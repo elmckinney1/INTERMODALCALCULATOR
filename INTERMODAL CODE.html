@@ -1,0 +1,135 @@
+
+Eboni McKinney <banks.eboni37@gmail.com>
+7:56 PM (5 minutes ago)
+to me
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Intermodal Truck Rate Calculator</title>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCRxK6FJV5O3pAwgZoVY4aAGU1kz8VKcl8&libraries=places"></script>
+<style>
+body {
+font-family: Arial, sans-serif;
+margin: 20px;
+}
+label, input {
+display: block;
+margin: 10px 0;
+}
+button {
+margin-top: 20px;
+padding: 10px;
+background-color: #007BFF;
+color: white;
+border: none;
+border-radius: 5px;
+cursor: pointer;
+}
+button:hover {
+background-color: #0056b3;
+}
+.output {
+margin-top: 20px;
+padding: 10px;
+border: 1px solid #ddd;
+border-radius: 5px;
+background-color: #f9f9f9;
+}
+</style>
+</head>
+<body>
+<h1>Intermodal Truck Rate Calculator</h1>
+<div>
+<label for="from">From (Enter GPS or Address):</label>
+<input type="text" id="from" placeholder="Enter starting location">
+
+<label for="to">To (Enter GPS or Address):</label>
+<input type="text" id="to" placeholder="Enter destination">
+
+<label for="fuelEfficiency">Truck Fuel Efficiency (Miles per Gallon):</label>
+<input type="number" step="0.1" id="fuelEfficiency" placeholder="e.g., 6.5">
+
+<label for="fuelCost">Fuel Cost (Per Gallon, $):</label>
+<input type="number" step="0.01" id="fuelCost" placeholder="e.g., 3.75">
+
+<label for="ratePerMile">Trucking Rate (Per Mile, $):</label>
+<input type="number" step="0.01" id="ratePerMile" placeholder="e.g., 2.50">
+
+<label for="driverPercentage">Driver Pay Percentage (%):</label>
+<input type="number" step="0.1" id="driverPercentage" placeholder="e.g., 25.5">
+
+<button onclick="calculate()">Calculate</button>
+</div>
+
+<div class="output" id="output">
+<h2>Results:</h2>
+<p><strong>Distance:</strong> <span id="distance">-</span></p>
+<p><strong>Estimated Time:</strong> <span id="time">-</span></p>
+<p><strong>Fuel Cost:</strong> $<span id="fuelCostResult">-</span></p>
+<p><strong>Trucking Rate:</strong> $<span id="truckingRate">-</span></p>
+<p><strong>Driver Pay:</strong> $<span id="driverPay">-</span></p>
+</div>
+
+<script>
+function calculate() {
+const from = document.getElementById("from").value;
+const to = document.getElementById("to").value;
+const fuelEfficiency = parseFloat(document.getElementById("fuelEfficiency").value);
+const fuelCost = parseFloat(document.getElementById("fuelCost").value);
+const ratePerMile = parseFloat(document.getElementById("ratePerMile").value);
+const driverPercentage = parseFloat(document.getElementById("driverPercentage").value) / 100;
+
+if (!from || !to || isNaN(fuelEfficiency) || isNaN(fuelCost) || isNaN(ratePerMile) || isNaN(driverPercentage)) {
+alert("Please fill in all fields correctly.");
+return;
+}
+
+const service = new google.maps.DistanceMatrixService();
+service.getDistanceMatrix(
+{
+origins: [from],
+destinations: [to],
+travelMode: "DRIVING",
+},
+(response, status) => {
+if (status !== "OK") {
+alert("Error with Google Maps API: " + status);
+return;
+}
+
+const distanceMeters = response.rows[0].elements[0].distance.value;
+const timeSeconds = response.rows[0].elements[0].duration.value;
+
+// Convert distance to miles and calculate round trip
+const distanceMiles = distanceMeters / 1609.34; // Convert meters to miles
+const roundTripMiles = distanceMiles * 2;
+
+// Calculate fuel cost
+const totalFuelCost = (roundTripMiles / fuelEfficiency) * fuelCost;
+
+// Calculate trucking rate
+const truckingRate = roundTripMiles * ratePerMile;
+
+// Calculate driver pay
+const driverPay = truckingRate * driverPercentage;
+
+// Convert time to hours and minutes
+const hours = Math.floor(timeSeconds / 3600);
+const minutes = Math.floor((timeSeconds % 3600) / 60);
+const timeFormatted = `${hours}h ${minutes}m`;
+
+// Display results
+document.getElementById("distance").textContent = `${roundTripMiles.toFixed(2)} miles (Round Trip)`;
+document.getElementById("time").textContent = timeFormatted;
+document.getElementById("fuelCostResult").textContent = totalFuelCost.toFixed(2);
+document.getElementById("truckingRate").textContent = truckingRate.toFixed(2);
+document.getElementById("driverPay").textContent = driverPay.toFixed(2);
+}
+);
+}
+</script>
+</body>
+</html>
